@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.hardcoder.meterreader.exception.TokenRefreshException;
 import com.hardcoder.meterreader.repository.RefreshTokenRepository;
-import com.hardcoder.meterreader.repository.UserRepository;
+import com.hardcoder.meterreader.repository.RegisterEMRepository;
 
 @Service
 public class RefreshTokenService {
@@ -23,16 +23,16 @@ public class RefreshTokenService {
   private RefreshTokenRepository refreshTokenRepository;
 
   @Autowired
-  private UserRepository userRepository;
+  private RegisterEMRepository registerEMRepository;
 
   public Optional<RefreshToken> findByToken(String token) {
     return refreshTokenRepository.findByToken(token);
   }
 
-  public RefreshToken createRefreshToken(Long userId) {
+  public RefreshToken createRefreshToken(Long registerEMId) {
     RefreshToken refreshToken = new RefreshToken();
 
-    refreshToken.setUser(userRepository.findById(userId).get());
+    refreshToken.setRegisterEM(registerEMRepository.findById(registerEMId).get());
     refreshToken.setExpiryDate(Instant.now().plusMillis(refreshTokenDurationMs));
     refreshToken.setToken(UUID.randomUUID().toString());
 
@@ -50,7 +50,7 @@ public class RefreshTokenService {
   }
 
   @Transactional
-  public int deleteByUserId(Long userId) {
-    return refreshTokenRepository.deleteByUser(userRepository.findById(userId).get());
+  public int deleteByRegisterEMId(Long registerEMId) {
+    return refreshTokenRepository.deleteByRegisterEM(registerEMRepository.findById(registerEMId).get());
   }
 }

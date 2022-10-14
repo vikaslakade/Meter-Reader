@@ -11,8 +11,8 @@ public class RefreshToken {
   private long id;
 
   @OneToOne
-  @JoinColumn(name = "user_id", referencedColumnName = "id")
-  private User user;
+  @JoinColumn(name = "registerEM_id", referencedColumnName = "id")
+  private RegisterEM registerEM;
 
   @Column(nullable = false, unique = true)
   private String token;
@@ -31,12 +31,12 @@ public class RefreshToken {
     this.id = id;
   }
 
-  public User getUser() {
-    return user;
+  public RegisterEM getRegisterEM() {
+    return registerEM;
   }
 
-  public void setUser(User user) {
-    this.user = user;
+  public void setRegisterEM(RegisterEM registerEM) {
+    this.registerEM = registerEM;
   }
 
   public String getToken() {

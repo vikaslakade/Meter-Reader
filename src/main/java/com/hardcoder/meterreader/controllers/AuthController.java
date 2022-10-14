@@ -1,18 +1,16 @@
 package com.hardcoder.meterreader.controllers;
 
-import java.util.HashSet;
+import java.time.Instant;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
-import com.hardcoder.meterreader.models.ERole;
+import com.hardcoder.meterreader.models.Body;
 import com.hardcoder.meterreader.models.RefreshToken;
-import com.hardcoder.meterreader.models.Role;
-import com.hardcoder.meterreader.models.User;
-import com.hardcoder.meterreader.payload.request.LoginRequest;
-import com.hardcoder.meterreader.payload.request.SignupRequest;
+import com.hardcoder.meterreader.models.RegisterEM;
+import com.hardcoder.meterreader.payload.request.SessionCreateRequest;
+import com.hardcoder.meterreader.payload.request.EMSignupRequest;
 import com.hardcoder.meterreader.payload.request.TokenRefreshRequest;
 import com.hardcoder.meterreader.payload.response.JwtResponse;
 import com.hardcoder.meterreader.payload.response.MessageResponse;
@@ -35,17 +33,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.hardcoder.meterreader.exception.TokenRefreshException;
 import com.hardcoder.meterreader.repository.RoleRepository;
-import com.hardcoder.meterreader.repository.UserRepository;
+import com.hardcoder.meterreader.repository.RegisterEMRepository;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/abcd/em/auth/api")
 public class AuthController {
   @Autowired
   AuthenticationManager authenticationManager;
 
   @Autowired
-  UserRepository userRepository;
+  RegisterEMRepository registerEMRepository;
 
   @Autowired
   RoleRepository roleRepository;
@@ -59,11 +57,11 @@ public class AuthController {
   @Autowired
   RefreshTokenService refreshTokenService;
 
-  @PostMapping("/signin")
-  public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+  @PostMapping("/session-create")
+  public ResponseEntity<?> authenticateUser(@Valid @RequestBody SessionCreateRequest sessionCreateRequest) {
 
     Authentication authentication = authenticationManager
-        .authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+        .authenticate(new UsernamePasswordAuthenticationToken(sessionCreateRequest.getUsername(), sessionCreateRequest.getPassword()));
 
     SecurityContextHolder.getContext().setAuthentication(authentication);
 
@@ -71,63 +69,28 @@ public class AuthController {
 
     String jwt = jwtUtils.generateJwtToken(userDetails);
 
-    List<String> roles = userDetails.getAuthorities().stream().map(item -> item.getAuthority())
-        .collect(Collectors.toList());
-
     RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getId());
 
-    return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(), userDetails.getId(),
-        userDetails.getUsername(), userDetails.getEmail(), roles));
+    return ResponseEntity.ok(new JwtResponse(200,new Body(jwt,refreshToken.getToken(),refreshToken.getExpiryDate().toString())));
   }
 
-  @PostMapping("/signup")
-  public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
-    if (userRepository.existsByUsername(signUpRequest.getUsername())) {
-      return ResponseEntity.badRequest().body(new MessageResponse("Error: Username is already taken!"));
+  @PostMapping("/register/user")
+  public ResponseEntity<?> registerUser(@Valid @RequestBody EMSignupRequest signUpRequestEM) {
+    if (registerEMRepository.existsByUsername(signUpRequestEM.getUsername())) {
+      return ResponseEntity.badRequest().body(new MessageResponse( Instant.now().getEpochSecond(),"Error: Username is already taken!"));
     }
 
-    if (userRepository.existsByEmail(signUpRequest.getEmail())) {
-      return ResponseEntity.badRequest().body(new MessageResponse("Error: Email is already in use!"));
+    if (registerEMRepository.existsByEMSN(signUpRequestEM.getEMSN())) {
+      return ResponseEntity.badRequest().body(new MessageResponse(Instant.now().getEpochSecond(),"Error: EMSN is already in use!"));
     }
 
     // Create new user's account
-    User user = new User(signUpRequest.getUsername(), signUpRequest.getEmail(),
-        encoder.encode(signUpRequest.getPassword()));
+    RegisterEM registerEM = new RegisterEM(signUpRequestEM.getUsername(), signUpRequestEM.getEMname(),signUpRequestEM.getEMSN(),
+        encoder.encode(signUpRequestEM.getPassword()),signUpRequestEM.getCustomername());
 
-    Set<String> strRoles = signUpRequest.getRole();
-    Set<Role> roles = new HashSet<>();
+   registerEMRepository.save(registerEM);
 
-    if (strRoles == null) {
-      Role userRole = roleRepository.findByName(ERole.ROLE_USER)
-          .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-      roles.add(userRole);
-    } else {
-      strRoles.forEach(role -> {
-        switch (role) {
-        case "admin":
-          Role adminRole = roleRepository.findByName(ERole.ROLE_ADMIN)
-              .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-          roles.add(adminRole);
-
-          break;
-        case "mod":
-          Role modRole = roleRepository.findByName(ERole.ROLE_MODERATOR)
-              .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-          roles.add(modRole);
-
-          break;
-        default:
-          Role userRole = roleRepository.findByName(ERole.ROLE_USER)
-              .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-          roles.add(userRole);
-        }
-      });
-    }
-
-    user.setRoles(roles);
-    userRepository.save(user);
-
-    return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
+    return ResponseEntity.ok(new MessageResponse(Instant.now().getEpochSecond(),"EM registered successfully!"));
   }
 
   @PostMapping("/refreshtoken")
@@ -136,21 +99,21 @@ public class AuthController {
 
     return refreshTokenService.findByToken(requestRefreshToken)
         .map(refreshTokenService::verifyExpiration)
-        .map(RefreshToken::getUser)
-        .map(user -> {
-          String token = jwtUtils.generateTokenFromUsername(user.getUsername());
+        .map(RefreshToken::getRegisterEM)
+        .map(registerEM -> {
+          String token = jwtUtils.generateTokenFromUsername(registerEM.getUsername());
           return ResponseEntity.ok(new TokenRefreshResponse(token, requestRefreshToken));
         })
         .orElseThrow(() -> new TokenRefreshException(requestRefreshToken,
             "Refresh token is not in database!"));
   }
   
-  @PostMapping("/signout")
-  public ResponseEntity<?> logoutUser() {
-    UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-    Long userId = userDetails.getId();
-    refreshTokenService.deleteByUserId(userId);
-    return ResponseEntity.ok(new MessageResponse("Log out successful!"));
-  }
+//  @PostMapping("/signout")
+//  public ResponseEntity<?> logoutUser() {
+//    UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+//    Long registerEMId = userDetails.getId();
+//    refreshTokenService.deleteByRegisterEMId(registerEMId);
+//    return ResponseEntity.ok(new MessageResponse(Instant.now().getEpochSecond(),"Log out successful!"));
+//  }
 
 }

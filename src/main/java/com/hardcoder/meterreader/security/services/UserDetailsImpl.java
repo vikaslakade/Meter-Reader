@@ -5,60 +5,77 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import com.hardcoder.meterreader.models.User;
+import com.hardcoder.meterreader.models.RegisterEM;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public class UserDetailsImpl implements UserDetails {
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
+
+public class UserDetailsImpl extends RegisterEM implements UserDetails {
 	private static final long serialVersionUID = 1L;
 
 	private Long id;
 
 	private String username;
 
-	private String email;
+	private String EMSN;
+
+	private String EMname;
 
 	@JsonIgnore
 	private String password;
 
-	private Collection<? extends GrantedAuthority> authorities;
+	private String customername;
 
-	public UserDetailsImpl(Long id, String username, String email, String password,
-			Collection<? extends GrantedAuthority> authorities) {
+
+
+	public UserDetailsImpl(Long id, String username, String EMSN,String EMname, String password,
+						   String customername) {
 		this.id = id;
 		this.username = username;
-		this.email = email;
+		this.EMSN = EMSN;
+		this.EMname=EMname;
 		this.password = password;
-		this.authorities = authorities;
+		this.customername = customername;
 	}
 
-	public static UserDetailsImpl build(User user) {
-		List<GrantedAuthority> authorities = user.getRoles().stream()
-				.map(role -> new SimpleGrantedAuthority(role.getName().name()))
-				.collect(Collectors.toList());
+	public static UserDetailsImpl build(RegisterEM registerEM) {
+
 
 		return new UserDetailsImpl(
-				user.getId(), 
-				user.getUsername(), 
-				user.getEmail(),
-				user.getPassword(), 
-				authorities);
+				registerEM.getId(),
+				registerEM.getUsername(),
+				registerEM.getEMSN(),
+				registerEM.getEMname(),
+				registerEM.getPassword(),
+				registerEM.getCustomername());
 	}
 
-	@Override
-	public Collection<? extends GrantedAuthority> getAuthorities() {
-		return authorities;
-	}
+
 
 	public Long getId() {
 		return id;
 	}
 
-	public String getEmail() {
-		return email;
+	public String getEMSN() {
+		return EMSN;
+	}
+
+	public String getCustomername() {
+		return customername;
+	}
+
+	public String getEMname() {
+		return EMname;
+	}
+
+	@Override
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+		return null;
 	}
 
 	@Override

@@ -9,12 +9,12 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
 @Entity
-@Table(	name = "users", 
+@Table(	name = "register_em ",
 		uniqueConstraints = { 
 			@UniqueConstraint(columnNames = "username"),
-			@UniqueConstraint(columnNames = "email") 
+			@UniqueConstraint(columnNames = "EMSN")
 		})
-public class User {
+public class RegisterEM {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -23,28 +23,37 @@ public class User {
 	@Size(max = 20)
 	private String username;
 
+
+	@NotBlank
+	@Size(max = 20)
+	private String EMname;
+
 	@NotBlank
 	@Size(max = 50)
-	@Email
-	private String email;
+	private String EMSN;
 
 	@NotBlank
 	@Size(max = 120)
 	private String password;
-	
-	@ManyToMany(fetch = FetchType.LAZY)
-	@JoinTable(	name = "user_roles", 
-				joinColumns = @JoinColumn(name = "user_id"), 
-				inverseJoinColumns = @JoinColumn(name = "role_id"))
-	private Set<Role> roles = new HashSet<>();
 
-	public User() {
+	@NotBlank
+	@Size(max = 50)
+	private String customername;
+
+
+	
+
+
+	public RegisterEM() {
 	}
 
-	public User(String username, String email, String password) {
+	public RegisterEM( String username,String EMname, String EMSN, String password, String customername) {
+
 		this.username = username;
-		this.email = email;
+		this.EMname=EMname;
+		this.EMSN = EMSN;
 		this.password = password;
+		this.customername = customername;
 	}
 
 	public Long getId() {
@@ -63,12 +72,12 @@ public class User {
 		this.username = username;
 	}
 
-	public String getEmail() {
-		return email;
+	public String getEMSN() {
+		return EMSN;
 	}
 
-	public void setEmail(String email) {
-		this.email = email;
+	public void setEMSN(String EMSN) {
+		this.EMSN = EMSN;
 	}
 
 	public String getPassword() {
@@ -79,11 +88,19 @@ public class User {
 		this.password = password;
 	}
 
-	public Set<Role> getRoles() {
-		return roles;
+	public String getCustomername() {
+		return customername;
 	}
 
-	public void setRoles(Set<Role> roles) {
-		this.roles = roles;
+	public void setCustomername(String customername) {
+		this.customername = customername;
+	}
+
+	public String getEMname() {
+		return EMname;
+	}
+
+	public void setEMname(String EMname) {
+		this.EMname = EMname;
 	}
 }

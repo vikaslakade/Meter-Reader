@@ -87,7 +87,7 @@ public class WebSecurityConfig { // extends WebSecurityConfigurerAdapter {
     http.cors().and().csrf().disable()
         .exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
         .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-        .authorizeRequests().antMatchers("/api/auth/**").permitAll()
+        .authorizeRequests().antMatchers("/abcd/em/auth/api/**").permitAll()
 			.antMatchers(
 					"/", "/csrf",
 					"/v2/api-docs",
@@ -95,7 +95,6 @@ public class WebSecurityConfig { // extends WebSecurityConfigurerAdapter {
 					"/swagger-ui.html",
 					"/webjars/**"
 			).permitAll()
-			.antMatchers("/api/test/**").permitAll()
         .anyRequest().authenticated();
     
     http.authenticationProvider(authenticationProvider());
